@@ -9,20 +9,36 @@ namespace dotnet_tutorial.Services.CharacterService
             new Character {Id = 3, Name = "Legolas"}
         };
 
-        public List<Character> AddCharacter(Character newCharacter)
-        {
-            characters.Add(newCharacter);
-            return characters;
+        private readonly IMapper _mapper;
+
+        public CharacterService(IMapper mapper) {
+            _mapper = mapper;
         }
 
-        public List<Character> GetAllCharacters()
+        public async Task<ServiceResponse<List<GetCharacterDto>>> AddCharacter(AddCharacterDto newCharacter)
         {
-            return characters;
+            var character = _mapper.Map<Character>(newCharacter);
+            character.Id = characters.Max(c => c.Id) + 1;
+            characters.Add(character);
+
+            return new ServiceResponse<List<GetCharacterDto>> {
+                Data = characters.Select(c => _mapper.Map<GetCharacterDto>(c)).ToList()
+            };
         }
 
-        public Character GetCharacterById(int id)
+        public async Task<ServiceResponse<List<GetCharacterDto>>> GetAllCharacters()
         {
-            return characters.FirstOrDefault(c => c.Id == id) ?? throw new Exception("Character not found!");
+            return new ServiceResponse<List<GetCharacterDto>> {
+                Data = characters.Select(c => _mapper.Map<GetCharacterDto>(c)).ToList()
+            };
+        }
+
+        public async Task<ServiceResponse<GetCharacterDto>> GetCharacterById(int id)
+        {
+            var result = characters.FirstOrDefault(c => c.Id == id);
+            return new ServiceResponse<GetCharacterDto> {
+                Data = _mapper.Map<GetCharacterDto>(result)
+            };
         }
     }
 }
